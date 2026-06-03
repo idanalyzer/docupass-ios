@@ -1,0 +1,22 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    # CocoaPods is the primary build path (MediaPipe Tasks Vision has no official
+    # SwiftPM), so we lint the pod — this compiles the SDK against the real
+    # MediaPipeTasksVision dependency.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: pod lib lint
+        run: pod lib lint DocuPass.podspec --allow-warnings --skip-tests --platforms=ios
