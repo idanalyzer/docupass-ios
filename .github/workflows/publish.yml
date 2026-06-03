@@ -26,6 +26,7 @@ jobs:
       - name: pod trunk push
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-        # MediaPipe ships a static binary; skip the import-validation app target
-        # (its transitive-static-binary check would otherwise block the push).
-        run: pod trunk push DocuPass.podspec --allow-warnings --skip-import-validation
+        # MediaPipe ships a static binary xcframework; integrate as static
+        # frameworks so the transitive-static-binary validation passes (same flag
+        # that makes `pod lib lint` succeed in build.yml).
+        run: pod trunk push DocuPass.podspec --allow-warnings --use-static-frameworks
