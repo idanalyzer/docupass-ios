@@ -1,0 +1,31 @@
+name: Publish to CocoaPods
+
+# Publishes the DocuPass pod to CocoaPods trunk when a version tag (v*) is pushed.
+# The tag must match the podspec version (e.g. v0.1.0 -> s.version 0.1.0).
+#
+# Required repository secret:
+#   COCOAPODS_TRUNK_TOKEN  - a CocoaPods trunk session token. Generate with:
+#     pod trunk register support@idanalyzer.com 'ID Analyzer'
+#   then copy the token from ~/.netrc (machine trunk.cocoapods.org).
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: pod trunk push
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        # MediaPipe ships a static binary; skip the import-validation app target
+        # (its transitive-static-binary check would otherwise block the push).
+        run: pod trunk push DocuPass.podspec --allow-warnings --skip-import-validation
