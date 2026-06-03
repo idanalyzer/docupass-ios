@@ -1,0 +1,25 @@
+Pod::Spec.new do |s|
+  s.name             = 'DocuPass'
+  s.version          = '0.1.0'
+  s.summary          = 'Native in-app ID verification & KYC for iOS (ID Analyzer DocuPass).'
+  s.description      = <<-DESC
+    Embed ID Analyzer DocuPass identity verification natively inside your iOS app —
+    document scanning, face match, and on-device active liveness — with no external
+    browser and no WebView. Drop in one SwiftUI view, get a result callback.
+  DESC
+  s.homepage         = 'https://github.com/idanalyzer/docupass-ios'
+  s.license          = { :type => 'MIT', :file => 'LICENSE' }
+  s.author           = { 'ID Analyzer' => 'support@idanalyzer.com' }
+  s.source           = { :git => 'https://github.com/idanalyzer/docupass-ios.git', :tag => s.version.to_s }
+
+  s.ios.deployment_target = '15.0'
+  s.swift_version    = '5.9'
+
+  s.source_files     = 'Sources/DocuPass/**/*.swift'
+  s.resource_bundles = {
+    'DocuPass' => ['Sources/DocuPass/Resources/face_landmarker.task', 'Sources/DocuPass/Resources/country.json']
+  }
+
+  s.frameworks       = 'SwiftUI', 'AVFoundation', 'UIKit', 'WebKit', 'CoreImage'
+  s.dependency 'MediaPipeTasksVision', '~> 0.10'
+end

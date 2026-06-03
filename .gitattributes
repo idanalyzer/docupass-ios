@@ -1,0 +1,9 @@
+*.task binary
+*.tflite binary
+*.png binary
+*.jpg binary
+*.swift text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.podspec text eol=lf
+Package.swift text eol=lf
