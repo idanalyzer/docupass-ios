@@ -15,6 +15,11 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '15.0'
   s.swift_version    = '5.9'
 
+  # MediaPipeTasksVision is a static binary xcframework; packaging DocuPass as a
+  # static framework lets that transitive dependency integrate (and is required
+  # for `pod trunk push`, which has no --use-static-frameworks flag).
+  s.static_framework = true
+
   s.source_files     = 'Sources/DocuPass/**/*.swift'
   s.resource_bundles = {
     'DocuPass' => ['Sources/DocuPass/Resources/face_landmarker.task', 'Sources/DocuPass/Resources/country.json']
