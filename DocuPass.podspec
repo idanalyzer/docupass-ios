@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/idanalyzer/docupass-ios'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'ID Analyzer' => 'support@idanalyzer.com' }
-  s.source           = { :git => 'https://github.com/idanalyzer/docupass-ios.git', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/idanalyzer/docupass-ios.git', :tag => "v#{s.version}" }
 
   s.ios.deployment_target = '15.0'
   s.swift_version    = '5.9'
