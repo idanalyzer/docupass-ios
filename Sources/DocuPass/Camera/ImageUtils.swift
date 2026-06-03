@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import CoreImage
+import CoreMedia
 
 enum ImageUtils {
     /// Scale so the longest side is at most `maxSize`, preserving aspect ratio.

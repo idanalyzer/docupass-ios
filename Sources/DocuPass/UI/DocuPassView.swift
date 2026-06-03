@@ -59,8 +59,8 @@ public struct DocuPassView: View {
         case .customForm: CustomFormView(controller: controller, session: session)
         case .phone: PhoneView(controller: controller, session: session)
         case .contract: ContractView(controller: controller, session: session)
-        case .partyPending: MessageView(title: "Waiting", body: "Waiting for another party to complete their part.")
-        case .unknown: MessageView(title: "Please wait", body: "Preparing the next step…")
+        case .partyPending: MessageView(title: "Waiting", message: "Waiting for another party to complete their part.")
+        case .unknown: MessageView(title: "Please wait", message: "Preparing the next step…")
         }
     }
 
@@ -88,11 +88,11 @@ struct WelcomeView: View {
 
 struct MessageView: View {
     let title: String
-    let body: String
+    let message: String
     var body: some View {
         VStack(spacing: 8) {
             Text(title).font(.title3).bold()
-            Text(body).multilineTextAlignment(.center)
+            Text(message).multilineTextAlignment(.center)
         }.padding(24)
     }
 }

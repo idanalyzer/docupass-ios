@@ -47,7 +47,7 @@ public final class CameraController: NSObject {
     }
 
     public func captureDocument() async throws -> UIImage {
-        try await withCheckedContinuation { (cont: CheckedContinuation<UIImage, Error>) in
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<UIImage, Error>) in
             photoContinuation = cont
             let settings = AVCapturePhotoSettings()
             photoOutput.capturePhoto(with: settings, delegate: self)
