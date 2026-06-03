@@ -19,4 +19,6 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_15.4.app
 
       - name: pod lib lint
-        run: pod lib lint DocuPass.podspec --allow-warnings --skip-tests --platforms=ios
+        # MediaPipeTasksVision ships a static binary xcframework; lint must
+        # integrate as static frameworks to allow that transitive dependency.
+        run: pod lib lint DocuPass.podspec --allow-warnings --skip-tests --use-static-frameworks --platforms=ios
