@@ -79,6 +79,9 @@ public final class DocuPassController: ObservableObject {
             state = .finished(mapTerminal(err))
         } else if err.isFatal || err.code == nil {
             state = .finished(.error(reference: config.reference, error: err))
+        } else if err.isDisplay {
+            // ERROR_POPUP: show the message, stay on the current step.
+            transientError = err
         } else {
             transientError = err
             Task { await refresh() }
@@ -86,10 +89,13 @@ public final class DocuPassController: ObservableObject {
     }
 
     private func mapTerminal(_ err: DocuPassError) -> DocuPassResult {
-        let redirect = (err.message?.isEmpty == false) ? err.message : nil
-        if err.code == DocuPassErrorCode.failed {
-            return .failed(reference: config.reference, code: err.code, message: err.message, redirectURL: redirect)
+        // Only completed/redirect/accepted/underReview/failed put a redirect URL in
+        // `message`; successMessage/errorMessage/reviewContract carry display text.
+        let msg = (err.message?.isEmpty == false) ? err.message : nil
+        let redirect = DocuPassErrorCode.carriesRedirectURL(err.code) ? msg : nil
+        if DocuPassErrorCode.isSuccessTerminal(err.code) {
+            return .completed(reference: config.reference, redirectURL: redirect, code: err.code)
         }
-        return .completed(reference: config.reference, redirectURL: redirect, code: err.code)
+        return .failed(reference: config.reference, code: err.code, message: msg, redirectURL: redirect)
     }
 }

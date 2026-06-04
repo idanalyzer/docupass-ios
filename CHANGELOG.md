@@ -15,6 +15,11 @@ GPS / location support.
 - Adds three overridable strings: `locationTitle`, `locationBody`,
   `locationPermissionRequired`. **Host apps must add `NSLocationWhenInUseUsageDescription`
   to their Info.plist** (as with `NSCameraUsageDescription`).
+- Terminal/display error-code classification: fixed an infinite resync loop where
+  `DOCUPASS_ERROR_MESSAGE` (e.g. session expired) was treated as recoverable and
+  re-ran `get_action` forever. It is now a terminal failure. `DOCUPASS_SUCCESS_MESSAGE`
+  / `DOCUPASS_REVIEW_CONTRACT` are terminal; `DOCUPASS_ERROR_POPUP` (phone-step alerts)
+  shows the message and stays on the current step so the user can retry.
 
 ## 0.1.1
 
