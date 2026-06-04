@@ -74,6 +74,78 @@ public struct DocuPassStrings {
     public var contractSubmit = "Submit signatures"
 
     public init() {}
+
+    /// Copy with overrides keyed by property name (used by the RN / Flutter bridges).
+    public func applying(_ o: [String: String]) -> DocuPassStrings {
+        var s = self
+        if let v = o["start"] { s.start = v }
+        if let v = o["continueButton"] { s.continueButton = v }
+        if let v = o["pleaseWaitTitle"] { s.pleaseWaitTitle = v }
+        if let v = o["pleaseWaitBody"] { s.pleaseWaitBody = v }
+        if let v = o["waitingTitle"] { s.waitingTitle = v }
+        if let v = o["waitingBody"] { s.waitingBody = v }
+        if let v = o["cameraPermissionRequired"] { s.cameraPermissionRequired = v }
+        if let v = o["welcomeFallback"] { s.welcomeFallback = v }
+        if let v = o["selectDocumentTitle"] { s.selectDocumentTitle = v }
+        if let v = o["countryLabel"] { s.countryLabel = v }
+        if let v = o["documentTypeLabel"] { s.documentTypeLabel = v }
+        if let v = o["pleaseMakeSure"] { s.pleaseMakeSure = v }
+        if let v = o["reqClear"] { s.reqClear = v }
+        if let v = o["reqDocumentNo"] { s.reqDocumentNo = v }
+        if let v = o["reqName"] { s.reqName = v }
+        if let v = o["reqDob"] { s.reqDob = v }
+        if let v = o["reqAddress"] { s.reqAddress = v }
+        if let v = o["reqPostcode"] { s.reqPostcode = v }
+        if let v = o["capturePassport"] { s.capturePassport = v }
+        if let v = o["captureFront"] { s.captureFront = v }
+        if let v = o["captureBack"] { s.captureBack = v }
+        if let v = o["capture"] { s.capture = v }
+        if let v = o["captureBackButton"] { s.captureBackButton = v }
+        if let v = o["faceLoading"] { s.faceLoading = v }
+        if let v = o["faceForward"] { s.faceForward = v }
+        if let v = o["faceGreat"] { s.faceGreat = v }
+        if let v = o["faceTurnLeft"] { s.faceTurnLeft = v }
+        if let v = o["faceTurnRight"] { s.faceTurnRight = v }
+        if let v = o["faceDone"] { s.faceDone = v }
+        if let v = o["faceNoFace"] { s.faceNoFace = v }
+        if let v = o["customFormTitle"] { s.customFormTitle = v }
+        if let v = o["phoneTitle"] { s.phoneTitle = v }
+        if let v = o["phonePresetPrefix"] { s.phonePresetPrefix = v }
+        if let v = o["phoneCodeLabel"] { s.phoneCodeLabel = v }
+        if let v = o["phoneNumberLabel"] { s.phoneNumberLabel = v }
+        if let v = o["phoneSendSms"] { s.phoneSendSms = v }
+        if let v = o["phoneCall"] { s.phoneCall = v }
+        if let v = o["phoneCodeEntryLabel"] { s.phoneCodeEntryLabel = v }
+        if let v = o["phoneVerify"] { s.phoneVerify = v }
+        if let v = o["contractTitle"] { s.contractTitle = v }
+        if let v = o["contractSignature"] { s.contractSignature = v }
+        if let v = o["contractClear"] { s.contractClear = v }
+        if let v = o["contractAccept"] { s.contractAccept = v }
+        if let v = o["contractSubmit"] { s.contractSubmit = v }
+        return s
+    }
+}
+
+extension Color {
+    /// Parse a #RGB / #RRGGBB / #AARRGGBB hex string (used by the bridges).
+    init?(hex: String) {
+        var h = hex.trimmingCharacters(in: .whitespaces)
+        if h.hasPrefix("#") { h.removeFirst() }
+        guard let int = UInt64(h, radix: 16) else { return nil }
+        let r, g, b, a: Double
+        switch h.count {
+        case 3:
+            r = Double((int >> 8) & 0xF) / 15; g = Double((int >> 4) & 0xF) / 15; b = Double(int & 0xF) / 15; a = 1
+        case 6:
+            r = Double((int >> 16) & 0xFF) / 255; g = Double((int >> 8) & 0xFF) / 255; b = Double(int & 0xFF) / 255; a = 1
+        case 8:
+            a = Double((int >> 24) & 0xFF) / 255; r = Double((int >> 16) & 0xFF) / 255
+            g = Double((int >> 8) & 0xFF) / 255; b = Double(int & 0xFF) / 255
+        default:
+            return nil
+        }
+        self = Color(.sRGB, red: r, green: g, blue: b, opacity: a)
+    }
 }
 
 /// Branding for the drop-in UI.
