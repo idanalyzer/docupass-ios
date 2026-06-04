@@ -5,6 +5,17 @@ import WebKit
 private let documentMaxSize: CGFloat = 1600
 private let documentQuality: CGFloat = 0.9
 
+/// Capture-requirement bullets driven by the session's verify-* flags (mirrors the web).
+private func documentRequirements(_ s: DocuPassSession) -> [String] {
+    var r = ["The whole document is in frame, in focus, and free of glare."]
+    if !s.verifyDocumentNo.isEmpty { r.append("The document number is clearly visible.") }
+    if !s.verifyName.isEmpty { r.append("Your full name is readable.") }
+    if !s.verifyDob.isEmpty || !s.verifyAge.isEmpty { r.append("Your date of birth is readable.") }
+    if !s.verifyAddress.isEmpty { r.append("Your address is readable.") }
+    if !s.verifyPostCode.isEmpty { r.append("Your postcode is readable.") }
+    return r
+}
+
 // MARK: - Document
 
 struct DocumentView: View {
@@ -41,6 +52,9 @@ private struct DocumentSelection: View {
                 Text("Select").tag("")
                 ForEach(types) { Text($0.label).tag($0.code) }
             }
+            Section("Please make sure") {
+                ForEach(documentRequirements(session), id: \.self) { Text("•  \($0)").font(.footnote) }
+            }
             Button("Continue") {
                 Task { await controller.submitDocumentSelection(country: country, type: type) }
             }.disabled(country.isEmpty || type.isEmpty)
@@ -60,11 +74,20 @@ private struct DocumentCapture: View {
 
     private var needBack: Bool { !session.isFrontOnly }
 
+    private var captureLabel: String {
+        if front == nil {
+            return session.selectedDocumentType.uppercased() == "P"
+                ? "Capture the passport data page"
+                : "Capture the front of your document"
+        }
+        return "Capture the back of your document"
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             CameraPreview(controller: camera).ignoresSafeArea()
             VStack(spacing: 12) {
-                Text(front == nil ? "Capture the front of your document" : "Capture the back of your document")
+                Text(captureLabel)
                     .font(.headline).foregroundColor(.white)
                 Button(capturing ? "…" : "Capture") { capture() }
                     .buttonStyle(.borderedProminent).disabled(capturing)
