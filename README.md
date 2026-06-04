@@ -42,14 +42,28 @@ countries and 14,000+ document types.
 
 ## How it works
 
-DocuPass is server-driven, so your **API key stays on your backend** and the device
-only holds a short-lived verification `reference`:
+DocuPass is server-driven. **Your API key is secret and lives only on your backend** —
+the mobile app never creates a session or reads results directly. The device only
+ever holds a short-lived `reference`.
 
 1. **Server → create a session.** Call `POST /docupass` with your API key (any
-   [ID Analyzer server SDK](https://developer.idanalyzer.com/help)). You get a **`reference`**.
-2. **App → run the SDK.** Pass the `reference` to `DocuPassView`. It guides the user
-   through capture + liveness on-device and returns a `DocuPassResult`.
-3. **Server → fetch the result.** Call `GET /docupass/{reference}` with your API key.
+   [ID Analyzer server SDK](https://developer.idanalyzer.com/help)) using a
+   [KYC profile](https://developer.idanalyzer.com/help/profiles). Set a **webhook URL**
+   on the profile so results are pushed to you. You get a **`reference`**.
+2. **App → run the SDK.** Pass the `reference` to `DocuPassView`. The SDK runs capture
+   + liveness on-device and fires `onResult` when the flow ends — a **UX signal**, not
+   the authoritative result.
+3. **Server → receive the verified result** (extracted identity data + the
+   accept / review / reject decision):
+   - **Recommended — webhook (push).** When verification concludes, ID Analyzer
+     `POST`s the full transaction — name, date of birth, document number, face-match,
+     AML, decision, warnings, images — to your webhook URL, with automatic retries.
+   - **Or pull it server-side** with `GET /docupass/{reference}` (your API key) — it
+     returns the DocuPass record including the final transaction with all verified data.
+
+> 🔒 **Never ship your API key in the app, and never call `POST /docupass` or
+> `GET /docupass/{reference}` from the mobile SDK** — both require your secret API
+> key. Treat `onResult` purely as a UI cue; **your backend is the source of truth**.
 
 ## Requirements
 
@@ -88,7 +102,8 @@ struct VerifyScreen: View {
         DocuPassView(config: DocuPassConfig(reference: "US...your-reference...")) { result in
             switch result {
             case .completed:
-                break // Verified. Fetch the data server-side: GET /docupass/{reference}
+                break // Flow finished — update your UI. Verified data arrives on your
+                       // server via webhook (or GET /docupass/{reference}), not here.
             case .failed:
                 break // rejected
             case .cancelled:
@@ -177,8 +192,11 @@ await controller.submitFace(frames: [faceBase64])                     // your li
 | `.cancelled(reference)` | The user dismissed the flow. |
 | `.error(reference, error)` | Network or fatal session error. |
 
-The verification **data and decision live server-side** — always read them with your
-API key via `GET /docupass/{reference}`.
+`onResult` only tells your **app** that the flow ended — it carries no verified
+identity data. The verified data and decision arrive on your **server**: via the
+**webhook** you configured on the DocuPass profile (recommended, with retries), or by
+calling `GET /docupass/{reference}` server-side with your API key. Never use a
+client-side result as the decision.
 
 ## Links
 
