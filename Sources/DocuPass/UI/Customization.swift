@@ -126,7 +126,7 @@ public struct DocuPassStrings {
     }
 }
 
-extension Color {
+public extension Color {
     /// Parse a #RGB / #RRGGBB / #AARRGGBB hex string (used by the bridges).
     init?(hex: String) {
         var h = hex.trimmingCharacters(in: .whitespaces)
