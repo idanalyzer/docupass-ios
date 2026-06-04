@@ -259,18 +259,31 @@ struct ContractView: View {
     @State private var signatures: [String: String] = [:]
     @State private var clearToken = 0
 
+    // Signature fields are `<img data-signature …>` / `<div data-signature …>`
+    // elements carrying a data-uid (matches the DocuPass v3 web client). Other
+    // data-uid elements (e.g. data-image placeholders) are NOT signature fields.
     private var uids: [String] {
-        let re = try? NSRegularExpression(pattern: "data-uid=\"([^\"]+)\"")
         let text = session.contractSource
-        let matches = re?.matches(in: text, range: NSRange(text.startIndex..., in: text)) ?? []
+        guard let tagRe = try? NSRegularExpression(
+                pattern: "<[a-zA-Z][^>]*\\bdata-signature\\b[^>]*>", options: [.caseInsensitive]),
+              let uidRe = try? NSRegularExpression(pattern: "data-uid=\"([^\"]+)\"") else { return [] }
         var seen: [String] = []
-        for m in matches {
-            if let r = Range(m.range(at: 1), in: text) {
-                let uid = String(text[r])
+        for tagMatch in tagRe.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+            guard let tagRange = Range(tagMatch.range, in: text) else { continue }
+            let tag = String(text[tagRange])
+            if let uidMatch = uidRe.firstMatch(in: tag, range: NSRange(tag.startIndex..., in: tag)),
+               let uidRange = Range(uidMatch.range(at: 1), in: tag) {
+                let uid = String(tag[uidRange])
                 if !seen.contains(uid) { seen.append(uid) }
             }
         }
         return seen
+    }
+
+    // Strip leftover unfilled prefill placeholders, like the web client does.
+    private var displayHtml: String {
+        session.contractSource.replacingOccurrences(
+            of: "%\\{[0-9A-Za-z_.\\-]+\\}", with: "", options: .regularExpression)
     }
 
     var body: some View {
@@ -278,7 +291,7 @@ struct ContractView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Review & sign").font(.title3).bold()
                 if !session.contractSource.isEmpty {
-                    ContractWebView(html: session.contractSource).frame(height: 360)
+                    ContractWebView(html: displayHtml).frame(height: 360)
                 }
                 ForEach(uids, id: \.self) { uid in
                     Text("Signature").font(.subheadline)
