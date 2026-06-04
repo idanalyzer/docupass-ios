@@ -231,7 +231,18 @@ struct PhoneView: View {
                 Text("We'll send a code to \(session.userPhone)")
             } else {
                 HStack {
-                    TextField("Code", text: $dialCode).frame(width: 70)
+                    if !session.phoneCountryCode.isEmpty {
+                        // Dial-code picker from the session (matches the web's <select>).
+                        Menu {
+                            ForEach(Array(session.phoneCountryCode.enumerated()), id: \.offset) { _, pc in
+                                Button("\(pc.name) \(pc.dialCode)") { dialCode = pc.dialCode }
+                            }
+                        } label: {
+                            Text(dialCode.isEmpty ? "Code" : dialCode).frame(width: 70, alignment: .leading)
+                        }
+                    } else {
+                        TextField("Code", text: $dialCode).frame(width: 70)
+                    }
                     TextField("Phone number", text: $localNumber).keyboardType(.phonePad)
                 }
             }
