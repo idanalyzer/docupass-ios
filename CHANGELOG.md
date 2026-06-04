@@ -19,4 +19,4 @@ Initial DocuPass iOS SDK — full parity with the Android core.
 - CocoaPods podspec (depends on MediaPipeTasksVision); SwiftPM manifest for the
   pure-Swift surface.
 
-Built against DOCUPASS_PROTOCOL_SPEC.md (validated vs the production coreapi_go).
+Built against the DocuPass v3 API and verified against the production service.

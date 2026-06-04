@@ -36,7 +36,7 @@ public struct DocuPassConfig {
 }
 
 /// Active-liveness parameters, ported 1:1 from the DocuPass v3 web client
-/// (DOCUPASS_PROTOCOL_SPEC §8). Change with care — tuned to the bundled model.
+///. Change with care — tuned to the bundled model.
 public struct LivenessConfig {
     public var thresholdOffsetPercent: Double
     public var thresholdTurnPercent: Double

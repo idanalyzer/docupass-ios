@@ -1,6 +1,6 @@
 import Foundation
 
-/// The flat `get_action` response (mirrors coreapi_go `DocupassGetSessionResponse`).
+/// The flat `get_action` response.
 /// Also returned by every successful POST step. Unknown keys are ignored.
 public struct DocuPassSession: Decodable {
     public let success: Bool

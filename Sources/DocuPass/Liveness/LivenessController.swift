@@ -13,7 +13,7 @@ public struct LivenessUpdate {
     public let bestNeutralFrame: UIImage?
 }
 
-/// Port of the DocuPass v3 web `FaceChecker` (DOCUPASS_PROTOCOL_SPEC §8):
+/// Port of the DocuPass v3 web `FaceChecker`:
 /// neutral hold -> turn left -> turn right, best-neutral by eye-polygon area.
 /// Pure logic — feed it landmarks + the frame they came from.
 public final class LivenessController {

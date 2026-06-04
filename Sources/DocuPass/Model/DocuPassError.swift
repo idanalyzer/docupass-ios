@@ -1,6 +1,6 @@
 import Foundation
 
-/// Authoritative DocuPass error / terminal codes (from coreapi_go `response.go`).
+/// Authoritative DocuPass error / terminal codes (from the DocuPass API).
 /// Delivered in `error.code` with `success:false` and HTTP 200 — branch on these,
 /// not on HTTP status.
 public enum DocuPassErrorCode {
