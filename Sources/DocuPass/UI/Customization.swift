@@ -20,6 +20,9 @@ public struct DocuPassStrings {
     public var waitingTitle = "Waiting"
     public var waitingBody = "Waiting for another party to complete their part."
     public var cameraPermissionRequired = "Camera permission is required"
+    public var locationTitle = "Getting your location"
+    public var locationBody = "This verification requires your location. Please allow location access."
+    public var locationPermissionRequired = "Location access is required to continue."
 
     // Welcome
     public var welcomeFallback = "You'll be guided through a quick identity verification."
@@ -85,6 +88,9 @@ public struct DocuPassStrings {
         if let v = o["waitingTitle"] { s.waitingTitle = v }
         if let v = o["waitingBody"] { s.waitingBody = v }
         if let v = o["cameraPermissionRequired"] { s.cameraPermissionRequired = v }
+        if let v = o["locationTitle"] { s.locationTitle = v }
+        if let v = o["locationBody"] { s.locationBody = v }
+        if let v = o["locationPermissionRequired"] { s.locationPermissionRequired = v }
         if let v = o["welcomeFallback"] { s.welcomeFallback = v }
         if let v = o["selectDocumentTitle"] { s.selectDocumentTitle = v }
         if let v = o["countryLabel"] { s.countryLabel = v }

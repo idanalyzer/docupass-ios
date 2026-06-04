@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'DocuPass'
-  s.version          = '0.1.1'
+  s.version          = '0.1.2'
   s.summary          = 'Native in-app ID verification & KYC for iOS (ID Analyzer DocuPass).'
   s.description      = <<-DESC
     Embed ID Analyzer DocuPass identity verification natively inside your iOS app —
@@ -25,6 +25,6 @@ Pod::Spec.new do |s|
     'DocuPass' => ['Sources/DocuPass/Resources/face_landmarker.task', 'Sources/DocuPass/Resources/country.json']
   }
 
-  s.frameworks       = 'SwiftUI', 'AVFoundation', 'UIKit', 'WebKit', 'CoreImage'
+  s.frameworks       = 'SwiftUI', 'AVFoundation', 'UIKit', 'WebKit', 'CoreImage', 'CoreLocation'
   s.dependency 'MediaPipeTasksVision', '~> 0.10'
 end

@@ -87,6 +87,14 @@ Then `pod install`, and add a camera usage string to your **Info.plist**:
 <string>Required to verify your identity.</string>
 ```
 
+If your DocuPass profile has **location tracking** enabled, also add a location
+usage string (the SDK requests location only in that case):
+
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Required to verify your identity.</string>
+```
+
 > **Swift Package Manager:** a `Package.swift` is included for the pure-Swift
 > surface, but the liveness engine needs `MediaPipeTasksVision` (no official SPM
 > yet) — supply it via a binary xcframework, or use CocoaPods.

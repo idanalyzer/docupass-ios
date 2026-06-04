@@ -19,6 +19,10 @@ public struct DocuPassView: View {
     @State private var cameraGranted = false
     @State private var welcomeAck = false
     @State private var delivered = false
+    // GPS: only when the session sets gps=true. The server requires a Geolocation
+    // header on every call after get_action, so we obtain a fix before the next step.
+    @State private var geoReady = false
+    @State private var geoRequested = false
 
     public init(
         config: DocuPassConfig,
@@ -58,9 +62,27 @@ public struct DocuPassView: View {
         case .step(let session):
             if !welcomeAck && (!session.welcomeMessage.isEmpty || !session.companyName.isEmpty) {
                 WelcomeView(session: session) { welcomeAck = true }
+            } else if session.gps && !geoReady {
+                // Hold the flow until the Geolocation fix is set, otherwise the next
+                // server call fails with LOCATION_HEADER_MISSING.
+                MessageView(title: strings.locationTitle, message: strings.locationBody)
+                    .task { await ensureLocation() }
             } else {
                 stepView(session)
             }
+        }
+    }
+
+    @MainActor
+    private func ensureLocation() async {
+        guard !geoReady, !geoRequested else { return }
+        geoRequested = true
+        let provider = LocationProvider()
+        if let loc = await provider.current() {
+            controller.setGeolocation(latitude: loc.0, longitude: loc.1, accuracy: loc.2)
+            geoReady = true
+        } else {
+            geoRequested = false // allow a retry if the view reappears
         }
     }
 
