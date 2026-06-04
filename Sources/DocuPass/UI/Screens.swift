@@ -6,13 +6,13 @@ private let documentMaxSize: CGFloat = 1600
 private let documentQuality: CGFloat = 0.9
 
 /// Capture-requirement bullets driven by the session's verify-* flags (mirrors the web).
-private func documentRequirements(_ s: DocuPassSession) -> [String] {
-    var r = ["The whole document is in frame, in focus, and free of glare."]
-    if !s.verifyDocumentNo.isEmpty { r.append("The document number is clearly visible.") }
-    if !s.verifyName.isEmpty { r.append("Your full name is readable.") }
-    if !s.verifyDob.isEmpty || !s.verifyAge.isEmpty { r.append("Your date of birth is readable.") }
-    if !s.verifyAddress.isEmpty { r.append("Your address is readable.") }
-    if !s.verifyPostCode.isEmpty { r.append("Your postcode is readable.") }
+private func documentRequirements(_ session: DocuPassSession, _ str: DocuPassStrings) -> [String] {
+    var r = [str.reqClear]
+    if !session.verifyDocumentNo.isEmpty { r.append(str.reqDocumentNo) }
+    if !session.verifyName.isEmpty { r.append(str.reqName) }
+    if !session.verifyDob.isEmpty || !session.verifyAge.isEmpty { r.append(str.reqDob) }
+    if !session.verifyAddress.isEmpty { r.append(str.reqAddress) }
+    if !session.verifyPostCode.isEmpty { r.append(str.reqPostcode) }
     return r
 }
 
@@ -32,6 +32,7 @@ struct DocumentView: View {
 }
 
 private struct DocumentSelection: View {
+    @Environment(\.docuPassStrings) private var strings
     @ObservedObject var controller: DocuPassController
     let session: DocuPassSession
     @State private var country: String = ""
@@ -44,18 +45,18 @@ private struct DocumentSelection: View {
 
     var body: some View {
         Form {
-            Picker("Country", selection: $country) {
+            Picker(strings.countryLabel, selection: $country) {
                 Text("Select").tag("")
                 ForEach(countries) { Text($0.name_en).tag($0.iso) }
             }
-            Picker("Document type", selection: $type) {
+            Picker(strings.documentTypeLabel, selection: $type) {
                 Text("Select").tag("")
                 ForEach(types) { Text($0.label).tag($0.code) }
             }
-            Section("Please make sure") {
-                ForEach(documentRequirements(session), id: \.self) { Text("•  \($0)").font(.footnote) }
+            Section(strings.pleaseMakeSure) {
+                ForEach(documentRequirements(session, strings), id: \.self) { Text("•  \($0)").font(.footnote) }
             }
-            Button("Continue") {
+            Button(strings.continueButton) {
                 Task { await controller.submitDocumentSelection(country: country, type: type) }
             }.disabled(country.isEmpty || type.isEmpty)
         }
@@ -66,6 +67,7 @@ private struct DocumentSelection: View {
 }
 
 private struct DocumentCapture: View {
+    @Environment(\.docuPassStrings) private var strings
     @ObservedObject var controller: DocuPassController
     let session: DocuPassSession
     @State private var camera = CameraController()
@@ -76,11 +78,9 @@ private struct DocumentCapture: View {
 
     private var captureLabel: String {
         if front == nil {
-            return session.selectedDocumentType.uppercased() == "P"
-                ? "Capture the passport data page"
-                : "Capture the front of your document"
+            return session.selectedDocumentType.uppercased() == "P" ? strings.capturePassport : strings.captureFront
         }
-        return "Capture the back of your document"
+        return strings.captureBack
     }
 
     var body: some View {
@@ -89,7 +89,7 @@ private struct DocumentCapture: View {
             VStack(spacing: 12) {
                 Text(captureLabel)
                     .font(.headline).foregroundColor(.white)
-                Button(capturing ? "…" : "Capture") { capture() }
+                Button(capturing ? "…" : strings.capture) { capture() }
                     .buttonStyle(.borderedProminent).disabled(capturing)
             }.padding(24)
         }
@@ -162,6 +162,7 @@ final class LivenessCoordinator: ObservableObject {
 }
 
 struct FaceView: View {
+    @Environment(\.docuPassStrings) private var strings
     @ObservedObject var controller: DocuPassController
     let session: DocuPassSession
     @StateObject private var coordinator: LivenessCoordinator
@@ -176,12 +177,12 @@ struct FaceView: View {
         ZStack(alignment: .bottom) {
             CameraPreview(controller: coordinator.camera).ignoresSafeArea()
             VStack(spacing: 12) {
-                Text(coordinator.ready ? instruction(coordinator.update?.step ?? .front) : "Loading face check…")
+                Text(coordinator.ready ? instruction(coordinator.update?.step ?? .front) : strings.faceLoading)
                     .font(.headline).foregroundColor(.white).multilineTextAlignment(.center)
                 if let u = coordinator.update {
                     ProgressView(value: u.progress)
                     if !u.faceVisible && coordinator.ready {
-                        Text("No face detected — center your face").font(.caption).foregroundColor(.white)
+                        Text(strings.faceNoFace).font(.caption).foregroundColor(.white)
                     }
                 }
             }.padding(24)
@@ -195,11 +196,11 @@ struct FaceView: View {
 
     private func instruction(_ step: LivenessStep) -> String {
         switch step {
-        case .front: return "Face forward and hold still"
-        case .frontSuccess: return "Great — keep going"
-        case .turnLeft: return "Slowly turn your head to the left"
-        case .turnRight: return "Slowly turn your head to the right"
-        case .doneSuccess, .complete: return "All done"
+        case .front: return strings.faceForward
+        case .frontSuccess: return strings.faceGreat
+        case .turnLeft: return strings.faceTurnLeft
+        case .turnRight: return strings.faceTurnRight
+        case .doneSuccess, .complete: return strings.faceDone
         }
     }
 }
@@ -207,6 +208,7 @@ struct FaceView: View {
 // MARK: - Custom form
 
 struct CustomFormView: View {
+    @Environment(\.docuPassStrings) private var strings
     @ObservedObject var controller: DocuPassController
     let session: DocuPassSession
     @State private var answers: [String: String] = [:]
@@ -224,7 +226,7 @@ struct CustomFormView: View {
                     }
                 }
             }
-            Button("Continue") {
+            Button(strings.continueButton) {
                 Task { await controller.submitForm(answers: answers) }
             }.disabled(!session.customField.allSatisfy { !(answers[$0.fieldId] ?? "").isEmpty })
         }
@@ -238,6 +240,7 @@ struct CustomFormView: View {
 // MARK: - Phone
 
 struct PhoneView: View {
+    @Environment(\.docuPassStrings) private var strings
     @ObservedObject var controller: DocuPassController
     let session: DocuPassSession
     @State private var dialCode = ""
@@ -251,7 +254,7 @@ struct PhoneView: View {
     var body: some View {
         Form {
             if preset {
-                Text("We'll send a code to \(session.userPhone)")
+                Text("\(strings.phonePresetPrefix)\(session.userPhone)")
             } else {
                 HStack {
                     if !session.phoneCountryCode.isEmpty {
@@ -261,22 +264,22 @@ struct PhoneView: View {
                                 Button("\(pc.name) \(pc.dialCode)") { dialCode = pc.dialCode }
                             }
                         } label: {
-                            Text(dialCode.isEmpty ? "Code" : dialCode).frame(width: 70, alignment: .leading)
+                            Text(dialCode.isEmpty ? strings.phoneCodeLabel : dialCode).frame(width: 70, alignment: .leading)
                         }
                     } else {
-                        TextField("Code", text: $dialCode).frame(width: 70)
+                        TextField(strings.phoneCodeLabel, text: $dialCode).frame(width: 70)
                     }
-                    TextField("Phone number", text: $localNumber).keyboardType(.phonePad)
+                    TextField(strings.phoneNumberLabel, text: $localNumber).keyboardType(.phonePad)
                 }
             }
             HStack {
-                Button("Send SMS") { Task { await controller.sendPhoneCode(number: number, channel: .sms); codeSent = true } }
+                Button(strings.phoneSendSms) { Task { await controller.sendPhoneCode(number: number, channel: .sms); codeSent = true } }
                 Spacer()
-                Button("Call me") { Task { await controller.sendPhoneCode(number: number, channel: .call); codeSent = true } }
+                Button(strings.phoneCall) { Task { await controller.sendPhoneCode(number: number, channel: .call); codeSent = true } }
             }
             if codeSent {
-                TextField("6-digit code", text: $code).keyboardType(.numberPad)
-                Button("Verify") {
+                TextField(strings.phoneCodeEntryLabel, text: $code).keyboardType(.numberPad)
+                Button(strings.phoneVerify) {
                     Task { await controller.verifyPhoneCode(number: number, code: code) }
                 }.disabled(code.count != 6)
             }
@@ -288,6 +291,7 @@ struct PhoneView: View {
 // MARK: - Contract
 
 struct ContractView: View {
+    @Environment(\.docuPassStrings) private var strings
     @ObservedObject var controller: DocuPassController
     let session: DocuPassSession
     @State private var signatures: [String: String] = [:]
@@ -323,19 +327,19 @@ struct ContractView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Review & sign").font(.title3).bold()
+                Text(strings.contractTitle).font(.title3).bold()
                 if !session.contractSource.isEmpty {
                     ContractWebView(html: displayHtml).frame(height: 360)
                 }
                 ForEach(uids, id: \.self) { uid in
-                    Text("Signature").font(.subheadline)
+                    Text(strings.contractSignature).font(.subheadline)
                     SignaturePad(
                         onCaptured: { signatures[uid] = $0.pngDataURL() },
                         onCleared: { signatures[uid] = nil },
                         clearToken: $clearToken
                     ).frame(height: 160)
                 }
-                Button(uids.isEmpty ? "Accept & Submit" : "Submit signatures") {
+                Button(uids.isEmpty ? strings.contractAccept : strings.contractSubmit) {
                     Task { await controller.submitContract(signatures: signatures) }
                 }.disabled(!uids.allSatisfy { signatures[$0] != nil })
             }.padding(16)

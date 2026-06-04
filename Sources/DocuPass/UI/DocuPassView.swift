@@ -11,6 +11,8 @@ import SwiftUI
 /// ```
 public struct DocuPassView: View {
     @StateObject private var controller: DocuPassController
+    private let strings: DocuPassStrings
+    private let theme: DocuPassTheme
     private let onResult: (DocuPassResult) -> Void
 
     @State private var permissionChecked = false
@@ -18,13 +20,23 @@ public struct DocuPassView: View {
     @State private var welcomeAck = false
     @State private var delivered = false
 
-    public init(config: DocuPassConfig, onResult: @escaping (DocuPassResult) -> Void) {
+    public init(
+        config: DocuPassConfig,
+        strings: DocuPassStrings = DocuPassStrings(),
+        theme: DocuPassTheme = DocuPassTheme(),
+        onResult: @escaping (DocuPassResult) -> Void
+    ) {
         _controller = StateObject(wrappedValue: DocuPassController(config: config))
+        self.strings = strings
+        self.theme = theme
         self.onResult = onResult
     }
 
     public var body: some View {
         content
+            .environment(\.docuPassStrings, strings)
+            .environment(\.docuPassTheme, theme)
+            .tint(theme.primaryColor)
             .task {
                 guard !permissionChecked else { return }
                 permissionChecked = true
@@ -59,8 +71,8 @@ public struct DocuPassView: View {
         case .customForm: CustomFormView(controller: controller, session: session)
         case .phone: PhoneView(controller: controller, session: session)
         case .contract: ContractView(controller: controller, session: session)
-        case .partyPending: MessageView(title: "Waiting", message: "Waiting for another party to complete their part.")
-        case .unknown: MessageView(title: "Please wait", message: "Preparing the next step…")
+        case .partyPending: MessageView(title: strings.waitingTitle, message: strings.waitingBody)
+        case .unknown: MessageView(title: strings.pleaseWaitTitle, message: strings.pleaseWaitBody)
         }
     }
 
@@ -72,16 +84,27 @@ public struct DocuPassView: View {
 }
 
 struct WelcomeView: View {
+    @Environment(\.docuPassStrings) private var strings
+    @Environment(\.docuPassTheme) private var theme
     let session: DocuPassSession
     let onContinue: () -> Void
+
+    private var logoURL: URL? {
+        guard theme.showLogo else { return nil }
+        let raw = theme.logoURL ?? session.logoURL
+        return raw.isEmpty ? nil : URL(string: raw)
+    }
+
     var body: some View {
         VStack(spacing: 16) {
+            if let logoURL {
+                AsyncImage(url: logoURL) { $0.resizable().scaledToFit() } placeholder: { EmptyView() }
+                    .frame(maxHeight: 96)
+            }
             if !session.companyName.isEmpty { Text(session.companyName).font(.title2).bold() }
-            Text(session.welcomeMessage.isEmpty
-                 ? "You'll be guided through a quick identity verification."
-                 : session.welcomeMessage)
+            Text(session.welcomeMessage.isEmpty ? strings.welcomeFallback : session.welcomeMessage)
                 .multilineTextAlignment(.center)
-            Button("Start", action: onContinue).buttonStyle(.borderedProminent)
+            Button(strings.start, action: onContinue).buttonStyle(.borderedProminent)
         }.padding(24)
     }
 }
