@@ -18,5 +18,9 @@ let package = Package(
             name: "DocuPass",
             resources: [.process("Resources")]
         ),
+        .testTarget(
+            name: "DocuPassTests",
+            dependencies: ["DocuPass"]
+        ),
     ]
 )

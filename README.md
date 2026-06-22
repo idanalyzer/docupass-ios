@@ -1,220 +1,142 @@
-# DocuPass iOS SDK — Native In-App ID Verification, KYC & Liveness for iOS
+# DocuPass iOS SDK
 
-[![CocoaPods](https://img.shields.io/cocoapods/v/DocuPass)](https://cocoapods.org/pods/DocuPass)
-[![Platform iOS 15+](https://img.shields.io/badge/iOS-15%2B-green)](#requirements)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![ID Analyzer](https://img.shields.io/badge/by-ID%20Analyzer-0b5cff)](https://www.idanalyzer.com)
-
-Add **identity verification and KYC** to your iOS app in minutes. The DocuPass iOS
-SDK runs the entire flow **natively, on-device** — ID document scanning, biometric
-**face match**, and **active liveness detection** — with **no external browser and
-no WebView**. Drop in one SwiftUI view, get a result callback.
-
-Built by **[ID Analyzer](https://www.idanalyzer.com)** — the identity verification
-platform trusted for [ID document recognition](https://www.idanalyzer.com/products/id-scanner-api.html),
-[biometric verification](https://www.idanalyzer.com/products/biometric-verification.html),
-and [AML screening](https://www.idanalyzer.com/products/aml-api.html) across 190+
-countries and 14,000+ document types.
-
-> **Why native instead of a WebView?** Wrapping the DocuPass web link in a
-> `WKWebView` breaks the camera (`getUserMedia` is unreliable in embedded web views,
-> liveness gets blocked). This SDK owns the camera with **AVFoundation** and runs
-> liveness on-device with **Google MediaPipe**, so verification just works inside
-> your app.
-
-**📚 Full documentation:** [developer.idanalyzer.com/help/docupass-ios-sdk](https://developer.idanalyzer.com/help/docupass-ios-sdk)
-· **🌐 Product:** [DocuPass](https://www.idanalyzer.com/products/docupass.html)
-· **📦 Other platforms:** [Android](https://github.com/idanalyzer/docupass-android) ·
-[React Native](https://github.com/idanalyzer/docupass-react-native) ·
-[Flutter](https://github.com/idanalyzer/docupass-flutter)
-
----
-
-## Features
-
-- 📱 **Fully native capture** — AVFoundation document & selfie capture; no WebView.
-- 🧠 **On-device active liveness** — MediaPipe face landmarks; hold still, then turn left/right.
-- 🪪 **Global document support** — passports, driver licenses, and ID cards from 190+ countries.
-- ✍️ **Full DocuPass flow** — document capture, face match, custom forms, phone (SMS/voice OTP) verification, and **e-signature contracts**.
-- 🎨 **White-label** — override every label (any language) and set the brand color & logo. One-line drop-in *or* fully headless.
-- 🔒 **Your API key never touches the device** — the app only holds a short-lived `reference`.
-- 🌍 **US & EU data regions** — chosen automatically from the reference.
-
-## How it works
-
-DocuPass is server-driven. **Your API key is secret and lives only on your backend** —
-the mobile app never creates a session or reads results directly. The device only
-ever holds a short-lived `reference`.
-
-1. **Server → create a session.** Call `POST /docupass` with your API key (any
-   [ID Analyzer server SDK](https://developer.idanalyzer.com/help)) using a
-   [KYC profile](https://developer.idanalyzer.com/help/profiles). Set a **webhook URL**
-   on the profile so results are pushed to you. You get a **`reference`**.
-2. **App → run the SDK.** Pass the `reference` to `DocuPassView`. The SDK runs capture
-   + liveness on-device and fires `onResult` when the flow ends — a **UX signal**, not
-   the authoritative result.
-3. **Server → receive the verified result** (extracted identity data + the
-   accept / review / reject decision):
-   - **Recommended — webhook (push).** When verification concludes, ID Analyzer
-     `POST`s the full transaction — name, date of birth, document number, face-match,
-     AML, decision, warnings, images — to your webhook URL, with automatic retries.
-   - **Or pull it server-side** with `GET /docupass/{reference}` (your API key) — it
-     returns the DocuPass record including the final transaction with all verified data.
-
-> 🔒 **Never ship your API key in the app, and never call `POST /docupass` or
-> `GET /docupass/{reference}` from the mobile SDK** — both require your secret API
-> key. Treat `onResult` purely as a UI cue; **your backend is the source of truth**.
+Native SwiftUI identity verification for ID Analyzer DocuPass. The SDK follows the
+server-driven Android SDK flow and supports phone verification, custom forms,
+document selection and capture, MediaPipe active liveness, contracts, pending
+sessions, and terminal results.
 
 ## Requirements
 
-- **iOS 15+**, Swift 5.9
-- The MediaPipe liveness model + country/document catalog are **bundled**.
+- iOS 15 or later
+- Swift 5.9
+- CocoaPods for active liveness (`MediaPipeTasksVision` has no official SwiftPM package)
 
 ## Installation
 
-### CocoaPods (recommended)
-
-MediaPipe Tasks Vision ships via CocoaPods, so CocoaPods is the primary path:
+Add DocuPass to your Podfile:
 
 ```ruby
-pod 'DocuPass', '~> 0.1'
+pod 'DocuPass', '~> 0.2'
 ```
 
-Then `pod install`, and add a camera usage string to your **Info.plist**:
+Run `pod install`, open the generated workspace, and add camera permission text to
+the host app's `Info.plist`:
 
 ```xml
 <key>NSCameraUsageDescription</key>
 <string>Required to verify your identity.</string>
 ```
 
-If your DocuPass profile has **location tracking** enabled, also add a location
-usage string (the SDK requests location only in that case):
+The pod installs `MediaPipeTasksVision ~> 0.10` transitively. DocuPass is a static
+framework because MediaPipe ships as static XCFrameworks. The face landmarker model
+and country catalog are bundled in `DocuPass.bundle`.
 
-```xml
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>Required to verify your identity.</string>
-```
+Swift Package Manager can build the API and UI surface, but active liveness reports
+an initialization error unless the consumer supplies a compatible
+`MediaPipeTasksVision` binary. CocoaPods is the supported full SDK path.
 
-> **Swift Package Manager:** a `Package.swift` is included for the pure-Swift
-> surface, but the liveness engine needs `MediaPipeTasksVision` (no official SPM
-> yet) — supply it via a binary xcframework, or use CocoaPods.
-
-## Quick start (drop-in UI)
+## SwiftUI
 
 ```swift
-import SwiftUI
 import DocuPass
+import SwiftUI
 
-struct VerifyScreen: View {
+struct VerificationView: View {
+    let reference: String
+
     var body: some View {
-        DocuPassView(config: DocuPassConfig(reference: "US...your-reference...")) { result in
-            switch result {
-            case .completed:
-                break // Flow finished — update your UI. Verified data arrives on your
-                       // server via webhook (or GET /docupass/{reference}), not here.
-            case .failed:
-                break // rejected
-            case .cancelled:
-                break // user dismissed
-            case .error:
-                break // network / fatal error
+        KYCScreen(
+            reference: reference,
+            onFinish: { result in
+                // This is a UI completion signal. Read the authoritative result
+                // from your backend webhook or server-side DocuPass API call.
+                print(result.sessionId ?? "finished")
+            },
+            onBackAtFirstStep: {
+                // Dismiss your containing view.
             }
-        }
+        )
     }
 }
 ```
 
-### Getting a `reference` (server side)
-
-Create the session on your backend, never in the app:
-
-```javascript
-import { DocuPass } from "idanalyzer2";
-
-const docupass = new DocuPass("YOUR_API_KEY", "YOUR_PROFILE_ID", "US");
-const session = await docupass.createDocuPass();
-// Send session.reference to your app and pass it to DocuPassView.
-```
-
-## Customization — labels, languages & branding
-
-Optional parameters on `DocuPassView`; one-line usage stays unchanged.
-
-### Re-label or translate to any language
-
-`DocuPassStrings` exposes **every** label as an overridable property. Override any
-subset to re-word or localize — you provide the translations:
+For a party-specific link or pre-acquired geolocation:
 
 ```swift
-var strings = DocuPassStrings()
-strings.selectDocumentTitle = "Sélectionnez votre document"
-strings.phoneTitle = "Vérifiez votre téléphone"
-strings.phoneSendSms = "Envoyer le SMS"
-strings.faceForward = "Regardez droit devant et ne bougez pas"
-
-DocuPassView(
-    config: DocuPassConfig(reference: reference),
-    strings: strings
-) { result in /* ... */ }
-```
-
-### Brand color & logo
-
-```swift
-import SwiftUI
-
-let theme = DocuPassTheme(
-    primaryColor: Color(hex: "#1565C0"),
-    logoURL: "https://yourbrand.example.com/logo.png"
+let settings = KYCSettings.fromReference(
+    reference,
+    partyId: partyId,
+    geolocation: "25.0330,121.5654",
+    onFinish: handleResult,
+    onBackAtFirstStep: dismiss
 )
 
-DocuPassView(
-    config: DocuPassConfig(reference: reference),
-    theme: theme
-) { result in /* ... */ }
+KYCScreen(settings: settings)
 ```
 
-## Headless API (build your own UI)
+The SDK does not request location itself. If the DocuPass profile requires GPS,
+obtain consent and location in the host app, then pass the value through
+`geolocation`.
 
-For full control, drive the protocol yourself — everything is public:
-`DocuPassController` (an `ObservableObject` state machine), `DocuPassClient`
-(async/await protocol client), `LivenessController` + `FaceLandmarkerEngine`, and
-`CameraController`.
+## Event API
+
+Use `DocupassKycSession` to build a custom UI while keeping the same state machine:
 
 ```swift
-let controller = DocuPassController(config: DocuPassConfig(reference: reference))
-// observe controller.state (@Published)
+@MainActor
+func startHeadless(reference: String) {
+    let session = DocupassKycSession(
+        config: .fromReference(reference)
+    )
 
-await controller.start()
-await controller.submitDocumentSelection(country: "US", type: "D")
-await controller.submitDocument(frontBase64: front, backBase64: back) // your capture
-await controller.submitFace(frames: [faceBase64])                     // your liveness
+    let subscription = session.subscribe { state in
+        switch state.event {
+        case let .documentCountrySelection(countries, _):
+            print(countries)
+        case let .completed(result):
+            print(result.sessionId ?? "completed")
+        default:
+            break
+        }
+    }
+
+    session.start()
+    _ = subscription // Retain while observing.
+}
 ```
 
-## Handling the result
+Available commands mirror the Android native session API:
 
-| Result | Meaning |
-|---|---|
-| `.completed(reference, redirectURL?, code?)` | Verification finished (accepted / under review). Fetch data via `GET /docupass/{reference}`. |
-| `.failed(reference, code?, message?, redirectURL?)` | Rejected or failed. |
-| `.cancelled(reference)` | The user dismissed the flow. |
-| `.error(reference, error)` | Network or fatal session error. |
+- `start`, `refresh`, `back`, `clearError`, `restart`
+- `sendPhoneCode`, `verifyPhoneCode`, `saveCustomForm`
+- `selectDocumentCountry`, `selectDocumentType`
+- `uploadDocument`, `uploadFace`, `submitContract`
 
-`onResult` only tells your **app** that the flow ended — it carries no verified
-identity data. The verified data and decision arrive on your **server**: via the
-**webhook** you configured on the DocuPass profile (recommended, with retries), or by
-calling `GET /docupass/{reference}` server-side with your API key. Never use a
-client-side result as the decision.
+## Session protocol
 
-## Links
+The client starts with one of these authorization headers:
 
-- 🌐 ID Analyzer: [www.idanalyzer.com](https://www.idanalyzer.com)
-- 🪪 DocuPass product: [idanalyzer.com/products/docupass.html](https://www.idanalyzer.com/products/docupass.html)
-- 📚 Developer docs & KB: [developer.idanalyzer.com/help](https://developer.idanalyzer.com/help)
-- 📱 This SDK's guide: [developer.idanalyzer.com/help/docupass-ios-sdk](https://developer.idanalyzer.com/help/docupass-ios-sdk)
-- 🔑 Get API keys / customer portal: [portal2.idanalyzer.com](https://portal2.idanalyzer.com)
-- 🧩 Other SDKs: [Android](https://github.com/idanalyzer/docupass-android) · [React Native](https://github.com/idanalyzer/docupass-react-native) · [Flutter](https://github.com/idanalyzer/docupass-flutter)
+```text
+DOCUPASS <reference>
+DOCUPASS <reference> <partyId>
+```
+
+After the API returns a session ID, subsequent requests use:
+
+```text
+DOCUPASS_SESSION <sessionId>
+```
+
+The SDK routes the server tasks `phone`, `customform`, `document`, `face`,
+`contract`, and `party_pending`. Any terminal or unknown task is treated as a
+completed flow, matching the Android SDK.
+
+## Security
+
+Create DocuPass sessions on your backend. Never put an ID Analyzer API key in the
+app. `onFinish` is only a UI signal; webhook data or a server-side
+`GET /docupass/{reference}` request is the authoritative verification result.
 
 ## License
 
-[MIT](LICENSE) © [ID Analyzer](https://www.idanalyzer.com)
+[MIT](LICENSE), ID Analyzer.

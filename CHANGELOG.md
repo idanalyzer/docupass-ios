@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+
+- Rebuilt the SDK around the Android event-driven DocuPass session protocol.
+- Added phone, custom form, document, face, contract, pending, completed, and failed events.
+- Added all DocuPass app v3 API operations and session authorization progression.
+- Added normalized server error actions for retry, resync, retake, edit, signature, and terminal states.
+- Replaced synchronous MediaPipe video inference with the official iOS live-stream pattern using `CMSampleBuffer` and `detectAsync`.
+- Added native SwiftUI document capture, active liveness, contract review, and signature submission.
+- Location is now caller-provided through `DocupassApiConfig.geolocation`, matching Android behavior.
+
 ## 0.1.2
 
 GPS / location support.
