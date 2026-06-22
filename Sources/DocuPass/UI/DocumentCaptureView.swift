@@ -78,19 +78,21 @@ struct DocumentCaptureView: View {
         }
     }
 
+    @MainActor
     private func capture() {
         isCapturing = true
-        Task {
+        Task { @MainActor in
             do {
                 let image = try await camera.capturePhoto()
                 let portraitDevice = UIScreen.main.bounds.height > UIScreen.main.bounds.width
                 let cropped = ImageUtils.cropDocument(image, type: documentType, portraitCard: portraitCard, portraitDevice: portraitDevice)
                 let encoded = ImageUtils.prepareUpload(cropped)
-                await MainActor.run {
-                    if activeSide == .front { frontImage = cropped; frontBase64 = encoded } else { backImage = cropped; backBase64 = encoded }
-                    camera.stop(); activeSide = nil; isCapturing = false
-                }
-            } catch { await MainActor.run { cameraError = error.localizedDescription; isCapturing = false } }
+                if activeSide == .front { frontImage = cropped; frontBase64 = encoded } else { backImage = cropped; backBase64 = encoded }
+                camera.stop(); activeSide = nil; isCapturing = false
+            } catch {
+                cameraError = error.localizedDescription
+                isCapturing = false
+            }
         }
     }
 
