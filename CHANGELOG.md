@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+- Re-published the compact accepted document type filter fix with a hardened
+  CocoaPods publish workflow so transient trunk errors do not leave accepted
+  releases marked as failed.
+
 ## 0.2.1
 
 - Fixed compact accepted document type filters such as `IPD` so they expand to

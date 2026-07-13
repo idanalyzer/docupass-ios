@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'DocuPass'
-  s.version          = '0.2.1'
+  s.version          = '0.2.2'
   s.summary          = 'Native in-app ID verification & KYC for iOS (ID Analyzer DocuPass).'
   s.description      = <<-DESC
     Embed ID Analyzer DocuPass identity verification natively inside your iOS app —
