@@ -155,7 +155,7 @@ public struct DocupassSessionState: Equatable, Sendable {
     }
 
     public var acceptedDocumentCountryCodes: [String] { acceptedDocumentCountry.commaSeparatedValues }
-    public var acceptedDocumentTypeCodes: [String] { acceptedDocumentType.commaSeparatedValues }
+    public var acceptedDocumentTypeCodes: [String] { acceptedDocumentType.documentTypeCodeValues }
 }
 
 public enum DocupassApiResult<Value: Sendable>: Sendable {
@@ -280,5 +280,17 @@ public let ALL_COUNTRIES: [KYCCountry] = [
 extension Optional where Wrapped == String {
     var commaSeparatedValues: [String] {
         self?.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty } ?? []
+    }
+
+    var documentTypeCodeValues: [String] {
+        let knownCodes = Set(KYCDocumentType.allCases.map(\.rawValue))
+        var seen = Set<String>()
+        return commaSeparatedValues.flatMap { value -> [String] in
+            let normalized = value.uppercased()
+            if normalized.count > 1 && normalized.allSatisfy({ knownCodes.contains(String($0)) }) {
+                return normalized.map { String($0) }
+            }
+            return [normalized]
+        }.filter { seen.insert($0).inserted }
     }
 }

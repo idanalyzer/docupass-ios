@@ -38,7 +38,7 @@ func documentTypeFromCode(_ code: String) -> KYCDocumentType? {
 }
 
 func documentTypesForFilter(_ codes: [String]?) -> [KYCDocumentType] {
-    let accepted = Set(codes?.map { $0.uppercased() } ?? [])
+    let accepted = Set(codes?.flatMap { Optional($0).documentTypeCodeValues } ?? [])
     return accepted.isEmpty ? KYCDocumentType.allCases : KYCDocumentType.allCases.filter { accepted.contains($0.rawValue) }
 }
 

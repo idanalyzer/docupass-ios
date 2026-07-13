@@ -27,6 +27,13 @@ final class DocupassCoreTests: XCTestCase {
         XCTAssertEqual(workflow, [.selectCountry(), .selectDocument, .captureDocument, .faceVerification([.turnLeft])])
     }
 
+    func testCompactAcceptedDocumentTypeFilter() {
+        let session = DocupassSessionState(acceptedDocumentType: "IPD")
+        XCTAssertEqual(session.acceptedDocumentTypeCodes, ["I", "P", "D"])
+        XCTAssertEqual(documentTypesForFilter(session.acceptedDocumentTypeCodes), [.passport, .driverLicense, .identityCard])
+        XCTAssertEqual(documentTypesForFilter(["I,D"]), [.driverLicense, .identityCard])
+    }
+
     func testFaceActionsAlwaysReturnTwoUniqueActions() {
         let actions = randomizedFaceActions([.turnLeft])
         XCTAssertEqual(actions.count, 2)

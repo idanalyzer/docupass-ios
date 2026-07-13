@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Fixed compact accepted document type filters such as `IPD` so they expand to
+  identity card, passport, and driver license options instead of hiding all
+  document type buttons.
+
 ## 0.2.0
 
 - Rebuilt the SDK around the Android event-driven DocuPass session protocol.
