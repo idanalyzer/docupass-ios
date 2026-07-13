@@ -29,4 +29,25 @@ jobs:
         # Static-framework packaging is declared in the podspec
         # (s.static_framework = true) so the MediaPipe static binary validates;
         # pod trunk push has no --use-static-frameworks flag.
-        run: pod trunk push DocuPass.podspec --allow-warnings
+        run: |
+          set +e
+          VERSION="$(ruby -e "podspec = File.read('DocuPass.podspec'); puts podspec[/s\\.version\\s*=\\s*['\\\"]([^'\\\"]+)['\\\"]/, 1]")"
+
+          if pod trunk info DocuPass | grep -q -- "- $VERSION "; then
+            echo "DocuPass $VERSION is already published to CocoaPods trunk."
+            exit 0
+          fi
+
+          pod trunk push DocuPass.podspec --allow-warnings
+          STATUS=$?
+          if [ "$STATUS" -eq 0 ]; then
+            exit 0
+          fi
+
+          echo "pod trunk push exited with $STATUS; checking whether trunk accepted the version anyway..."
+          if pod trunk info DocuPass | grep -q -- "- $VERSION "; then
+            echo "DocuPass $VERSION is visible on CocoaPods trunk after the failed response."
+            exit 0
+          fi
+
+          exit "$STATUS"
